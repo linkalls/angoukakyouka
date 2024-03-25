@@ -192,7 +192,8 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
 <?php endif; ?>
 <?php if (!empty($_SESSION['publicKeyFile']) && !empty($_SESSION['privateKeyFile']) && !empty($_SESSION['encryptedTextFile']) && isset($_GET['encrypted'])): ?>
   <div class="bg-white p-6 rounded shadow-md">
-    <p><?php echo $_SESSION['encryptionCount']; ?>暗号化が完了しました。</p>
+    <p>>暗号化が完了しました。</p>
+    <p style="color: red;">すべてのファイルをダウンロードをしないと複合化できません</p>
     <a href="<?php echo $_SESSION['publicKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">公開鍵をダウンロード</a>
     <a href="<?php echo $_SESSION['privateKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">秘密鍵をダウンロード</a>
     <a href="<?php echo $_SESSION['encryptedTextFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">暗号化されたテキストをダウンロード</a>
@@ -218,7 +219,7 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
     </div>
     <div id="decryptMessage" style="display: none; color: red;">公開鍵、秘密鍵、暗号化されたテキストのファイルをアップロードしてください。
     <br>(pemファイル二つとtxtファイル一つ)</div>  
-    <textarea name="text" id="text" placeholder="文章を入力してください" class="w-full p-2 border border-gray-300 rounded mb-4"></textarea>
+    <textarea  name="text" id="text" placeholder="文章を入力してください" class="w-full p-2 border border-gray-300 rounded mb-4" required></textarea>
     <input type="file" name="file1" id="file1" class="w-full p-2 border border-gray-300 rounded mb-4">
     <input type="file" name="file2" id="file2" class="w-full p-2 border border-gray-300 rounded mb-4">
     <input type="file" name="file3" id="file3" class="w-full p-2 border border-gray-300 rounded mb-4">
