@@ -39,6 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     list($publicKey, $privateKey) = generateRSAKeys();
     $encryptedText = encryptText($text, $publicKey);
 
+    // POSTリクエストの処理が完了したので、自身にリダイレクト
+    if (isset($_SESSION['processing']) && $_SESSION['processing']) {
+      header("Location: " . $_SERVER['PHP_SELF'] . "?encrypted=true");
+      exit;
+    }
+
+    // リクエストの処理を開始
+    $_SESSION['processing'] = true;
+
     // 公開鍵と秘密鍵をPEM形式で保存
     $timestamp = time();
     $publicKeyFile = "public_key_$timestamp.pem";
@@ -58,9 +67,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 暗号化の回数をカウント
     $_SESSION['encryptionCount'] = isset($_SESSION['encryptionCount']) ? $_SESSION['encryptionCount'] + 1 : 1;
 
+    // POSTリクエストの処理が完了したので、processingをリセット
+    unset($_SESSION['processing']);
+
    // POSTリクエストの処理が完了したので、自身にリダイレクト
    header("Location: " . $_SERVER['PHP_SELF'] . "?encrypted=true");
    exit;
+
  } elseif ($action === 'decrypt') {
    // 秘密鍵と公開鍵の読み込み（この例ではダミーの値を使用）
    $publicKey = '-----BEGIN PUBLIC KEY-----
@@ -72,19 +85,21 @@ MIIJKAIBAAKCAgEA...
 
    $decryptedText = decryptText($text, $privateKey);
  }
+
 } else {
   // リロードが行われた場合にセッションをクリア
-  if (isset($_SESSION['encrypted'])) {
-    session_unset();
-    unset($_SESSION['encrypted']);
-  } else if (!isset($_GET['encrypted'])) {
-    $_SESSION['encrypted'] = true;
-    header("Location: " . $_SERVER['PHP_SELF'] . "?encrypted=true");
-    exit;
+  if (isset($_GET['encrypted']) && empty($_POST)) {
+    if (isset($_SESSION['reloaded'])) {
+      session_unset();
+      header("Location: " . $_SERVER['PHP_SELF']);
+      exit;
+    } else {
+      $_SESSION['reloaded'] = true;
+    }
+  } else {
+    unset($_SESSION['reloaded']);
   }
 }
- 
-
 ?>
 
 <!DOCTYPE html>
