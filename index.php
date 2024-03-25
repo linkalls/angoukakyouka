@@ -226,6 +226,10 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
   </form>
 <?php endif; ?>
 <script>
+  window.onload = function() {
+    var isEncrypt = document.querySelector('input[name="action"]:checked').value === 'encrypt';
+    toggleInput(isEncrypt);
+  };
   function toggleInput(isEncrypt) {
     document.getElementById('text').style.display = isEncrypt ? 'block' : 'none';
     document.getElementById('file1').style.display = isEncrypt ? 'none' : 'block';
