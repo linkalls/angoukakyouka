@@ -49,32 +49,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // リクエストの処理を開始
     $_SESSION['processing'] = true;
 
-  
 
-    // 公開鍵と秘密鍵をPEM形式で保存
-    $timestamp = time();
-    $publicKeyFile = "public/public_key_$timestamp.pem";
-    $privateKeyFile = "private/private_key$timestamp.pem";
-    file_put_contents($publicKeyFile, $publicKey);
-    file_put_contents($privateKeyFile, $privateKey);
-
-        // ディレクトリが存在しない場合は作成
-  if (!file_exists('public')) {
-    mkdir('public', 0777, true);
-  }
-  if (!file_exists('private')) {
-    mkdir('private', 0777, true);
-  }
-
-   
-
-    // 暗号化されたテキストをTXTファイルに保存
-    $encryptedTextFile = "txt/encrypted_text_$timestamp.txt";
+    function writeFile($filePath, $content) {
+      $retryCount = 0;
+      $maxRetries = 5;
+    
+      while ($retryCount < $maxRetries) {
+        if (file_put_contents($filePath, $content) !== false) {
+          return true;
+        }
+        $retryCount++;
+        sleep(1); // Wait for 1 second before retrying
+      }
+    
+      return false;
+    }
 
     // ディレクトリが存在しない場合は作成
-  if (!file_exists('txt')) {
-    mkdir('txt', 0777, true);
-  }
+    if (!file_exists('public')) {
+      mkdir('public', 0777, true);
+    }
+    if (!file_exists('private')) {
+      mkdir('private', 0777, true);
+    }
+    if (!file_exists('txt')) {
+      mkdir('txt', 0777, true);
+    }
+
+    $timestamp = time();
+  
+    // 公開鍵と秘密鍵をPEM形式で保存
+    $publicKeyFile = "public/public_key_$timestamp.pem";
+    $privateKeyFile = "private/private_key$timestamp.pem";
+    $encryptedTextFile = "txt/encrypted_text_$timestamp.txt";
+
+    if (file_put_contents($publicKeyFile, $publicKey) === false ||
+        file_put_contents($privateKeyFile, $privateKey) === false ||
+        file_put_contents($encryptedTextFile, $encryptedText) === false) {
+      $_SESSION['errorMessage'] = 'ファイルの作成に失敗しました。';
+      header("Location: " . $_SERVER['PHP_SELF']);
+      exit;
+    }
+
+   
+    // 暗号化されたテキストをTXTファイルに保存
+$encryptedTextFile = "txt/encrypted_text_$timestamp.txt";
+
 
     file_put_contents($encryptedTextFile, $encryptedText);
 
@@ -99,6 +119,13 @@ $privateKeyFile = null;
 $encryptedTextFile = null;
 
 foreach ($files as $file) {
+  // ファイルアップロードのエラーチェック
+  if ($file['error'] !== UPLOAD_ERR_OK) {
+    $_SESSION['errorMessage'] = 'ファイルのアップロードに失敗しました。';
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
+  }
+
   $content = file_get_contents($file['tmp_name']);
   if (strpos($content, '-----BEGIN PRIVATE KEY-----') === 0) {
     $privateKeyFile = $file;
@@ -109,8 +136,17 @@ foreach ($files as $file) {
   }
 }
 
+
 if ($publicKeyFile === null || $privateKeyFile === null || $encryptedTextFile === null) {
   $_SESSION['errorMessage'] = '必要なファイルがアップロードされていません。公開鍵、秘密鍵、暗号化されたテキストのファイルをアップロードしてください。';
+  header("Location: " . $_SERVER['PHP_SELF']);
+  exit;
+}
+
+
+ // 復号化のエラーチェック
+ if ($decryptedText === false) {
+  $_SESSION['errorMessage'] = 'テキストの復号化に失敗しました。';
   header("Location: " . $_SERVER['PHP_SELF']);
   exit;
 }
@@ -228,11 +264,20 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
 <?php endif; ?>
 <script>
   window.onload = function() {
-    var isEncrypt = document.querySelector('input[name="action"]:checked').value === 'encrypt';
-    toggleInput(isEncrypt);
+    var actionInput = document.querySelector('input[name="action"]:checked');
+    if (actionInput) {
+      var isEncrypt = actionInput.value === 'encrypt';
+      toggleInput(isEncrypt);
+    }
   };
   function toggleInput(isEncrypt) {
-    document.getElementById('text').style.display = isEncrypt ? 'block' : 'none';
+    var textArea = document.getElementById('text');
+    textArea.style.display = isEncrypt ? 'block' : 'none';
+    if (isEncrypt) {
+      textArea.setAttribute('required', '');
+    } else {
+      textArea.removeAttribute('required');
+    }
     document.getElementById('file1').style.display = isEncrypt ? 'none' : 'block';
     document.getElementById('file2').style.display = isEncrypt ? 'none' : 'block';
     document.getElementById('file3').style.display = isEncrypt ? 'none' : 'block';
