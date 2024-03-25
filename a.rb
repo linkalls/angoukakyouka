@@ -17,7 +17,8 @@ end
 # 文章を復号化する関数を定義します
 def decrypt_text(encrypted_text, private_key)
   encrypted_text = Base64.decode64(encrypted_text)
-  return private_key.private_decrypt(encrypted_text)
+  decrypted_text = private_key.private_decrypt(encrypted_text)
+  return decrypted_text.force_encoding('UTF-8')
 end
 
 # 暗号化の処理
@@ -34,12 +35,14 @@ def perform_encryption
   encrypted_text = encrypt_text(original_text, public_key)
 
   puts "暗号化された文章: #{encrypted_text}"
-  puts "公開鍵と秘密鍵のファイルパスを保存してください。"
-  File.write('public_key.pem', public_key.to_pem)
-  File.write('private_key.pem', private_key.to_pem)
+  puts "公開鍵と秘密鍵のファイルパスを保存しました"
+  # 現在の日時を取得し、それをファイル名に使用します
+  timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+  File.write("#{timestamp}_public_key.pem", public_key.to_pem)
+  File.write("#{timestamp}_private_key.pem", private_key.to_pem)
 
   # 暗号化された文章をtxtファイルとして保存します
-  File.write('encrypted_text.txt', encrypted_text)
+  File.write("#{timestamp}_encrypted.txt", encrypted_text)
 end
 
 def perform_decryption(public_key_path, private_key_path, encrypted_text_path)
