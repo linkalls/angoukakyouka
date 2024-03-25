@@ -48,15 +48,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // リクエストの処理を開始
     $_SESSION['processing'] = true;
 
+  
+
     // 公開鍵と秘密鍵をPEM形式で保存
     $timestamp = time();
-    $publicKeyFile = "public_key_$timestamp.pem";
-    $privateKeyFile = "private_key_$timestamp.pem";
+    $publicKeyFile = "public/public_key_$timestamp.pem";
+    $privateKeyFile = "private/private_key$timestamp.pem";
     file_put_contents($publicKeyFile, $publicKey);
     file_put_contents($privateKeyFile, $privateKey);
 
+        // ディレクトリが存在しない場合は作成
+  if (!file_exists('public')) {
+    mkdir('public', 0777, true);
+  }
+  if (!file_exists('private')) {
+    mkdir('private', 0777, true);
+  }
+
+   
+
     // 暗号化されたテキストをTXTファイルに保存
-    $encryptedTextFile = "encrypted_text_$timestamp.txt";
+    $encryptedTextFile = "txt/encrypted_text_$timestamp.txt";
+
+    // ディレクトリが存在しない場合は作成
+  if (!file_exists('txt')) {
+    mkdir('txt', 0777, true);
+  }
+
     file_put_contents($encryptedTextFile, $encryptedText);
 
     // ファイル名をセッションに保存
@@ -67,8 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 暗号化の回数をカウント
     $_SESSION['encryptionCount'] = isset($_SESSION['encryptionCount']) ? $_SESSION['encryptionCount'] + 1 : 1;
 
-    // POSTリクエストの処理が完了したので、processingをリセット
-    unset($_SESSION['processing']);
+   
 
    // POSTリクエストの処理が完了したので、自身にリダイレクト
    header("Location: " . $_SERVER['PHP_SELF'] . "?encrypted=true");
@@ -85,6 +102,8 @@ MIIJKAIBAAKCAgEA...
 
    $decryptedText = decryptText($text, $privateKey);
  }
+ // POSTリクエストの処理が完了したので、processingをリセット
+ unset($_SESSION['processing']);
 
 } else {
   // リロードが行われた場合にセッションをクリア
@@ -116,21 +135,23 @@ MIIJKAIBAAKCAgEA...
   </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
-  <form action="" method="post" class="bg-white p-6 rounded shadow-md">
-    <textarea name="text" placeholder="文章を入力してください" class="w-full p-2 border border-gray-300 rounded mb-4"></textarea>
-    <div class="flex items-center mb-4">
-      <input type="radio" name="action" value="encrypt" checked class="mr-2"> 暗号化
-      <input type="radio" name="action" value="decrypt" class="ml-4 mr-2"> 復号化
-    </div>
-    <input type="submit" value="実行" class="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mb-4">
-    <?php if (!empty($_SESSION['publicKeyFile']) && !empty($_SESSION['privateKeyFile']) && !empty($_SESSION['encryptedTextFile'])): ?>
-      <div>
+  <?php if (!empty($_SESSION['publicKeyFile']) && !empty($_SESSION['privateKeyFile']) && !empty($_SESSION['encryptedTextFile']) && isset($_GET['encrypted'])): ?>
+    <div class="bg-white p-6 rounded shadow-md">
       <p><?php echo $_SESSION['encryptionCount']; ?>回目の暗号化が完了しました。</p>
-        <a href="<?php echo $_SESSION['publicKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">公開鍵をダウンロード</a>
-        <a href="<?php echo $_SESSION['privateKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">秘密鍵をダウンロード</a>
-        <a href="<?php echo $_SESSION['encryptedTextFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">暗号化されたテキストをダウンロード</a>
+      <a href="<?php echo $_SESSION['publicKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">公開鍵をダウンロード</a>
+      <a href="<?php echo $_SESSION['privateKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">秘密鍵をダウンロード</a>
+      <a href="<?php echo $_SESSION['encryptedTextFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">暗号化されたテキストをダウンロード</a>
+      <a href="<?php echo $_SERVER['PHP_SELF']; ?>" class="block w-full py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700 mt-2">元のページに戻る</a>
+    </div>
+  <?php else: ?>
+    <form action="" method="post" class="bg-white p-6 rounded shadow-md">
+      <textarea name="text" placeholder="文章を入力してください" class="w-full p-2 border border-gray-300 rounded mb-4"></textarea>
+      <div class="flex items-center mb-4">
+        <input type="radio" name="action" value="encrypt" checked class="mr-2"> 暗号化
+        <input type="radio" name="action" value="decrypt" class="ml-4 mr-2"> 復号化
       </div>
-    <?php endif; ?>
-  </form>
+      <input type="submit" value="実行" class="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mb-4">
+    </form>
+  <?php endif; ?>
 </body>
 </html>
