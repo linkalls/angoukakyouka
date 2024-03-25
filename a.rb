@@ -19,7 +19,7 @@ def decrypt_text(encrypted_text, private_key)
   encrypted_text = Base64.decode64(encrypted_text)
   decrypted_text = private_key.private_decrypt(encrypted_text)
   return decrypted_text.force_encoding('UTF-8')
-end
+ end
 
 # 暗号化の処理
 def perform_encryption
@@ -46,17 +46,22 @@ def perform_encryption
 end
 
 def perform_decryption(public_key_path, private_key_path, encrypted_text_path)
-  public_key = OpenSSL::PKey::RSA.new(File.read(public_key_path.gsub('"', '')))
-  private_key = OpenSSL::PKey::RSA.new(File.read(private_key_path.gsub('"', '')))
+  # ダブルクォーテーションを削除
+  public_key_path = public_key_path.gsub('"', '')
+  private_key_path = private_key_path.gsub('"', '')
+  encrypted_text_path = encrypted_text_path.gsub('"', '')
+
+  public_key = OpenSSL::PKey::RSA.new(File.read(public_key_path))
+  private_key = OpenSSL::PKey::RSA.new(File.read(private_key_path))
 
   # 暗号化された文章をtxtファイルから読み込みます
-  encrypted_text = File.read(encrypted_text_path.gsub('"', ''))
+  encrypted_text = File.read(encrypted_text_path)
 
   # 暗号化された文章を復号化します
   decrypted_text = decrypt_text(encrypted_text, private_key)
 
   puts "復号化された文章: #{decrypted_text}"
-end
+ end
 
 # オプションパーサーをセットアップします
 options = {}
