@@ -31,6 +31,7 @@ function decryptText($encryptedText, $privateKey) {
   return $decryptedText;
 }
 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $text = $_POST['text'];
   $action = $_POST['action'];
@@ -91,23 +92,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
    header("Location: " . $_SERVER['PHP_SELF'] . "?encrypted=true");
    exit;
 
- } elseif ($action === 'decrypt') {
-   // 秘密鍵と公開鍵の読み込み（この例ではダミーの値を使用）
-   $publicKey = '-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0B...
------END PUBLIC KEY-----';
-   $privateKey = '-----BEGIN PRIVATE KEY-----
-MIIJKAIBAAKCAgEA...
------END PRIVATE KEY-----';
+  } elseif ($action === 'decrypt') {
+$files = array($_FILES['file1'], $_FILES['file2'], $_FILES['file3']);
+$publicKeyFile = null;
+$privateKeyFile = null;
+$encryptedTextFile = null;
 
-   $decryptedText = decryptText($text, $privateKey);
- }
+foreach ($files as $file) {
+  $content = file_get_contents($file['tmp_name']);
+  if (strpos($content, '-----BEGIN PRIVATE KEY-----') === 0) {
+    $privateKeyFile = $file;
+  } elseif (pathinfo($file['name'], PATHINFO_EXTENSION) === 'txt') {
+    $encryptedTextFile = $file;
+  } else {
+    $publicKeyFile = $file;
+  }
+}
+
+if ($publicKeyFile === null || $privateKeyFile === null || $encryptedTextFile === null) {
+  $_SESSION['errorMessage'] = '必要なファイルがアップロードされていません。公開鍵、秘密鍵、暗号化されたテキストのファイルをアップロードしてください。';
+  header("Location: " . $_SERVER['PHP_SELF']);
+  exit;
+}
+
+// ファイルから公開鍵、秘密鍵、暗号化されたテキストを読み込む
+$publicKey = file_get_contents($publicKeyFile['tmp_name']);
+$privateKey = file_get_contents($privateKeyFile['tmp_name']);
+$encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
+
+  // ファイル形式をチェック
+  $allowedExtensions = array('pem', 'txt');
+  if (!in_array(pathinfo($publicKeyFile['name'], PATHINFO_EXTENSION), $allowedExtensions) ||
+      !in_array(pathinfo($privateKeyFile['name'], PATHINFO_EXTENSION), $allowedExtensions) ||
+      !in_array(pathinfo($encryptedTextFile['name'], PATHINFO_EXTENSION), $allowedExtensions)) {
+    $_SESSION['errorMessage'] = '使用できないファイル形式です。.pemまたは.txtファイルのみアップロードしてください。';
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
+  }
+
+  
+    // 復号化
+    $decryptedText = decryptText($encryptedText, $privateKey);
+
+    // 復号化後のメッセージをセッションに保存
+    $_SESSION['decryptedText'] = $decryptedText;
+
+    // POSTリクエストの処理が完了したので、自身にリダイレクト
+    header("Location: " . $_SERVER['PHP_SELF'] . "?decrypted=true");
+    exit;
+  }
+
+    
  // POSTリクエストの処理が完了したので、processingをリセット
  unset($_SESSION['processing']);
 
 } else {
   // リロードが行われた場合にセッションをクリア
   if (isset($_GET['encrypted']) && empty($_POST)) {
+    if (isset($_SESSION['reloaded'])) {
+      session_unset();
+      header("Location: " . $_SERVER['PHP_SELF']);
+      exit;
+    } else {
+      $_SESSION['reloaded'] = true;
+    }
+  } elseif (isset($_GET['decrypted']) && empty($_POST)) {
     if (isset($_SESSION['reloaded'])) {
       session_unset();
       header("Location: " . $_SERVER['PHP_SELF']);
@@ -135,23 +184,55 @@ MIIJKAIBAAKCAgEA...
   </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
-  <?php if (!empty($_SESSION['publicKeyFile']) && !empty($_SESSION['privateKeyFile']) && !empty($_SESSION['encryptedTextFile']) && isset($_GET['encrypted'])): ?>
+<?php if (isset($_SESSION['errorMessage'])): ?>
+  <div class="bg-red-600 text-white p-6 rounded shadow-md">
+    <p><?php echo $_SESSION['errorMessage']; ?></p>
+    <a href="<?php echo $_SERVER['PHP_SELF']; ?>" class="block w-full py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700 mt-2">元のページに戻る</a>
+  </div>
+<?php endif; ?>
+<?php if (!empty($_SESSION['publicKeyFile']) && !empty($_SESSION['privateKeyFile']) && !empty($_SESSION['encryptedTextFile']) && isset($_GET['encrypted'])): ?>
+  <div class="bg-white p-6 rounded shadow-md">
+    <p><?php echo $_SESSION['encryptionCount']; ?>暗号化が完了しました。</p>
+    <a href="<?php echo $_SESSION['publicKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">公開鍵をダウンロード</a>
+    <a href="<?php echo $_SESSION['privateKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">秘密鍵をダウンロード</a>
+    <a href="<?php echo $_SESSION['encryptedTextFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">暗号化されたテキストをダウンロード</a>
+    <a href="<?php echo $_SERVER['PHP_SELF']; ?>" class="block w-full py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700 mt-2">元のページに戻る</a>
+  </div>
+<?php elseif (isset($_GET['decrypted'])): ?>
+  <?php if (isset($_SESSION['decryptedText'])): ?>
     <div class="bg-white p-6 rounded shadow-md">
-      <p><?php echo $_SESSION['encryptionCount']; ?>回目の暗号化が完了しました。</p>
-      <a href="<?php echo $_SESSION['publicKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">公開鍵をダウンロード</a>
-      <a href="<?php echo $_SESSION['privateKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">秘密鍵をダウンロード</a>
-      <a href="<?php echo $_SESSION['encryptedTextFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">暗号化されたテキストをダウンロード</a>
+      <textarea readonly class="w-full p-2 border border-gray-300 rounded mb-4"><?php echo $_SESSION['decryptedText']; ?></textarea>
       <a href="<?php echo $_SERVER['PHP_SELF']; ?>" class="block w-full py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700 mt-2">元のページに戻る</a>
     </div>
   <?php else: ?>
-    <form action="" method="post" class="bg-white p-6 rounded shadow-md">
-      <textarea name="text" placeholder="文章を入力してください" class="w-full p-2 border border-gray-300 rounded mb-4"></textarea>
-      <div class="flex items-center mb-4">
-        <input type="radio" name="action" value="encrypt" checked class="mr-2"> 暗号化
-        <input type="radio" name="action" value="decrypt" class="ml-4 mr-2"> 復号化
-      </div>
-      <input type="submit" value="実行" class="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mb-4">
-    </form>
+    <div class="bg-red-600 text-white p-6 rounded shadow-md">
+      <p>復号化後のテキストが見つかりませんでした。</p>
+      <a href="<?php echo $_SERVER['PHP_SELF']; ?>" class="block w-full py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700 mt-2">元のページに戻る</a>
+    </div>
   <?php endif; ?>
+<?php else: ?>
+  <form action="" method="post" enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md">
+    <div class="flex items-center mb-4">
+      <input type="radio" name="action" value="encrypt" checked class="mr-2" onclick="toggleInput(true)"> 暗号化
+      <input type="radio" name="action" value="decrypt" class="ml-4 mr-2" onclick="toggleInput(false)"> 復号化
+    </div>
+    <div id="decryptMessage" style="display: none; color: red;">公開鍵、秘密鍵、暗号化されたテキストのファイルをアップロードしてください。
+    <br>(pemファイル二つとtxtファイル一つ)</div>  
+    <textarea name="text" id="text" placeholder="文章を入力してください" class="w-full p-2 border border-gray-300 rounded mb-4"></textarea>
+    <input type="file" name="file1" id="file1" class="w-full p-2 border border-gray-300 rounded mb-4">
+    <input type="file" name="file2" id="file2" class="w-full p-2 border border-gray-300 rounded mb-4">
+    <input type="file" name="file3" id="file3" class="w-full p-2 border border-gray-300 rounded mb-4">
+    <input type="submit" value="実行" class="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mb-4">
+  </form>
+<?php endif; ?>
+<script>
+  function toggleInput(isEncrypt) {
+    document.getElementById('text').style.display = isEncrypt ? 'block' : 'none';
+    document.getElementById('file1').style.display = isEncrypt ? 'none' : 'block';
+    document.getElementById('file2').style.display = isEncrypt ? 'none' : 'block';
+    document.getElementById('file3').style.display = isEncrypt ? 'none' : 'block';
+    document.getElementById('decryptMessage').style.display = isEncrypt ? 'none' : 'block';
+  }
+</script>
 </body>
 </html>
