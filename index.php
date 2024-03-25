@@ -55,36 +55,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['privateKeyFile'] = $privateKeyFile;
     $_SESSION['encryptedTextFile'] = $encryptedTextFile;
 
-    // POSTリクエストの処理が完了したので、自身にリダイレクト
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit;
-  } elseif ($action === 'decrypt') {
-    // 秘密鍵と公開鍵の読み込み（この例ではダミーの値を使用）
-    $publicKey = '-----BEGIN PUBLIC KEY-----
+    // 暗号化の回数をカウント
+    $_SESSION['encryptionCount'] = isset($_SESSION['encryptionCount']) ? $_SESSION['encryptionCount'] + 1 : 1;
+
+   // POSTリクエストの処理が完了したので、自身にリダイレクト
+   header("Location: " . $_SERVER['PHP_SELF'] . "?encrypted=true");
+   exit;
+ } elseif ($action === 'decrypt') {
+   // 秘密鍵と公開鍵の読み込み（この例ではダミーの値を使用）
+   $publicKey = '-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0B...
 -----END PUBLIC KEY-----';
-    $privateKey = '-----BEGIN PRIVATE KEY-----
+   $privateKey = '-----BEGIN PRIVATE KEY-----
 MIIJKAIBAAKCAgEA...
 -----END PRIVATE KEY-----';
 
-    $decryptedText = decryptText($text, $privateKey);
-  }
+   $decryptedText = decryptText($text, $privateKey);
+ }
 } else {
-  // ダウンロードボタンがある場合のみリロード数をカウント
-  if (!empty($_SESSION['publicKeyFile']) && !empty($_SESSION['privateKeyFile']) && !empty($_SESSION['encryptedTextFile'])) {
-    $_SESSION['reloadCount'] = isset($_SESSION['reloadCount']) ? $_SESSION['reloadCount'] + 1 : 1;
-
-    // リロードが2回目のときにはセッションに保存されたファイルを削除
-    if ($_SESSION['reloadCount'] == 2) {
-      unlink($_SESSION['publicKeyFile']);
-      unlink($_SESSION['privateKeyFile']);
-      unlink($_SESSION['encryptedTextFile']);
-
-      // セッションをクリア
-      session_unset();
-    }
+  // リロードが行われた場合にセッションをクリア
+  if (isset($_SESSION['encrypted'])) {
+    session_unset();
+    unset($_SESSION['encrypted']);
+  } else if (!isset($_GET['encrypted'])) {
+    $_SESSION['encrypted'] = true;
+    header("Location: " . $_SERVER['PHP_SELF'] . "?encrypted=true");
+    exit;
   }
 }
+ 
+
 ?>
 
 <!DOCTYPE html>
@@ -110,7 +110,7 @@ MIIJKAIBAAKCAgEA...
     <input type="submit" value="実行" class="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mb-4">
     <?php if (!empty($_SESSION['publicKeyFile']) && !empty($_SESSION['privateKeyFile']) && !empty($_SESSION['encryptedTextFile'])): ?>
       <div>
-        <p>暗号化が完了しました。</p>
+      <p><?php echo $_SESSION['encryptionCount']; ?>回目の暗号化が完了しました。</p>
         <a href="<?php echo $_SESSION['publicKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">公開鍵をダウンロード</a>
         <a href="<?php echo $_SESSION['privateKeyFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">秘密鍵をダウンロード</a>
         <a href="<?php echo $_SESSION['encryptedTextFile']; ?>" download class="block w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 mt-2">暗号化されたテキストをダウンロード</a>
