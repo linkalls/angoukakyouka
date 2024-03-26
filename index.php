@@ -211,14 +211,39 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
   <title>暗号化・復号化ツール</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
-    textarea {
+     textarea {
       height: 150px;
     }
-    @media (min-width: 768px) {
-    #text {
-      width: 70vw !important;
+    body {
+      background-color: #f3f4f6;
+      color: #1f2937;
     }
-  }
+    .card {
+      background-color: #ffffff;
+    }
+    .btn {
+      background-color: #3b82f6;
+    }
+    @media (prefers-color-scheme: dark) {
+      body, div, form {
+        background-color: #1f2937 !important;
+        color: #f3f4f6 !important;
+      }
+      textarea {
+        color: #000000 !important;
+      }
+      .card {
+        background-color: #4b5563 !important;
+      }
+      .btn {
+        background-color: #2563eb !important;
+      }
+    }
+    @media (min-width: 768px) {
+      #text {
+        width: 70vw !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
@@ -285,6 +310,8 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
     document.getElementById('file3').style.display = isEncrypt ? 'none' : 'block';
     document.getElementById('decryptMessage').style.display = isEncrypt ? 'none' : 'block';
   }
+
+  
 </script>
 </body>
 </html>
