@@ -76,12 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       mkdir('txt', 0777, true);
     }
 
-    $timestamp = time();
-  
-    // 公開鍵と秘密鍵をPEM形式で保存
-    $publicKeyFile = "public/public_key_$timestamp.pem";
-    $privateKeyFile = "private/private_key$timestamp.pem";
-    $encryptedTextFile = "txt/encrypted_text_$timestamp.txt";
+    // 一意なIDを生成
+    $uniqueId = uniqid();
+
+    // ファイル名に一意なIDを使用
+    $publicKeyFile = "public/public_key_$uniqueId.pem";
+    $privateKeyFile = "private/private_key$uniqueId.pem";
+    $encryptedTextFile = "txt/encrypted_text_$uniqueId.txt";
 
     if (file_put_contents($publicKeyFile, $publicKey) === false ||
         file_put_contents($privateKeyFile, $privateKey) === false ||
@@ -91,9 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       exit;
     }
 
-   
-    // 暗号化されたテキストをTXTファイルに保存
-$encryptedTextFile = "txt/encrypted_text_$timestamp.txt";
+  
 
 
     file_put_contents($encryptedTextFile, $encryptedText);
@@ -103,8 +102,6 @@ $encryptedTextFile = "txt/encrypted_text_$timestamp.txt";
     $_SESSION['privateKeyFile'] = $privateKeyFile;
     $_SESSION['encryptedTextFile'] = $encryptedTextFile;
 
-    // 暗号化の回数をカウント
-    $_SESSION['encryptionCount'] = isset($_SESSION['encryptionCount']) ? $_SESSION['encryptionCount'] + 1 : 1;
 
    
 
