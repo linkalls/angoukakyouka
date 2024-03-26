@@ -211,6 +211,26 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
   <title>暗号化・復号化ツール</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
+     .radio {
+      position: relative;
+      display: inline-block;
+      margin-right: 20px;
+      cursor: pointer;
+    }
+    .radio input {
+      position: absolute;
+      opacity: 0;
+    }
+    .radio .radio__inner {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #1f2937;
+      display: inline-block;
+    }
+    .radio input:checked ~ .radio__inner {
+      background-color: #10B981;
+    }
      textarea {
       height: 150px;
     }
@@ -237,6 +257,12 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
       }
       .btn {
         background-color: #2563eb !important;
+      }
+      .radio .radio__inner {
+        border-color: #f3f4f6;
+      }
+      .radio input:checked ~ .radio__inner {
+        background-color: #10B981;
       }
     }
     @media (min-width: 768px) {
@@ -277,8 +303,16 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
 <?php else: ?>
   <form action="" method="post" enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md">
     <div class="flex items-center mb-4">
-      <input type="radio" name="action" value="encrypt" checked class="mr-2" onclick="toggleInput(true)"> 暗号化
-      <input type="radio" name="action" value="decrypt" class="ml-4 mr-2" onclick="toggleInput(false)"> 復号化
+      <label class="radio">
+        <input type="radio" name="action" value="encrypt" checked class="mr-2" onclick="toggleInput(true)">
+        <span class="radio__inner"></span>
+        暗号化
+      </label>
+      <label class="radio">
+        <input type="radio" name="action" value="decrypt" class="ml-4 mr-2" onclick="toggleInput(false)">
+        <span class="radio__inner"></span>
+        復号化
+      </label>
     </div>
     <div id="decryptMessage" style="display: none; color: red;">公開鍵、秘密鍵、暗号化されたテキストのファイルをアップロードしてください。
     <br>(pemファイル二つとtxtファイル一つ)</div>  
