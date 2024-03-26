@@ -214,6 +214,11 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
     textarea {
       height: 150px;
     }
+    @media (min-width: 768px) {
+    #text {
+      width: 70vw !important;
+    }
+  }
   </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
@@ -235,7 +240,7 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
 <?php elseif (isset($_GET['decrypted'])): ?>
   <?php if (isset($_SESSION['decryptedText'])): ?>
     <div class="bg-white p-6 rounded shadow-md">
-      <textarea readonly class="w-full p-2 border border-gray-300 rounded mb-4"><?php echo $_SESSION['decryptedText']; ?></textarea>
+      <textarea readonly class="w-full p-2 border border-gray-300 rounded mb-4" style="width: calc(100vw - 40px);"><?php echo $_SESSION['decryptedText']; ?></textarea>
       <a href="<?php echo $_SERVER['PHP_SELF']; ?>" class="block w-full py-2 px-4 bg-red-600 text-white rounded hover:bg-red-700 mt-2">元のページに戻る</a>
     </div>
   <?php else: ?>
@@ -252,7 +257,7 @@ $encryptedText = file_get_contents($encryptedTextFile['tmp_name']);;
     </div>
     <div id="decryptMessage" style="display: none; color: red;">公開鍵、秘密鍵、暗号化されたテキストのファイルをアップロードしてください。
     <br>(pemファイル二つとtxtファイル一つ)</div>  
-    <textarea  name="text" id="text" placeholder="文章を入力してください" class="w-full p-2 border border-gray-300 rounded mb-4" required></textarea>
+<textarea name="text" id="text" placeholder="文章を入力してください" class="p-2 border border-gray-300 rounded mb-4" style="width: calc(100vw - 40px);" required></textarea>
     <input type="file" name="file1" id="file1" class="w-full p-2 border border-gray-300 rounded mb-4">
     <input type="file" name="file2" id="file2" class="w-full p-2 border border-gray-300 rounded mb-4">
     <input type="file" name="file3" id="file3" class="w-full p-2 border border-gray-300 rounded mb-4">
